@@ -26,7 +26,9 @@ def apply_gaussian_filter(image: np.ndarray):
     return apply_filter(get_padded_image(image, gaussian_filter), gaussian_filter)
 
 
-def apply_median_filter(padded_img: np.ndarray, fltr: np.ndarray):
+def apply_median_filter(image: np.ndarray):
+    fltr = get_median_filter()
+    padded_img = get_padded_image(image, fltr)
     result = np.zeros([padded_img.shape[0], padded_img.shape[1]], dtype=np.uint8)
     for i in range(padded_img.shape[0] - fltr.shape[0]):
         for j in range(padded_img.shape[1] - fltr.shape[1]):
