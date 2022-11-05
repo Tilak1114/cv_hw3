@@ -34,7 +34,7 @@ def apply_median_filter(image: np.ndarray):
         for j in range(padded_img.shape[1] - fltr.shape[1]):
             sample = padded_img[i:i + fltr.shape[1], j:j + fltr.shape[0]]
             median = np.median(sample)
-            result[i + fltr.shape[0] // 2][j + fltr.shape[1] // 2] = median
+            result[i + (fltr.shape[0] // 2)][j + (fltr.shape[1] // 2)] = median
 
     return result
 
@@ -43,7 +43,7 @@ def apply_filter(padded_img: np.ndarray, fltr: np.ndarray):
     result = np.zeros([padded_img.shape[0], padded_img.shape[1]], dtype=np.uint8)
     for i in range(padded_img.shape[0] - fltr.shape[0]):
         for j in range(padded_img.shape[1] - fltr.shape[1]):
-            sample = padded_img[i:i + fltr.shape[1], j:j + fltr.shape[0]]
+            sample = padded_img[i:i + fltr.shape[0], j:j + fltr.shape[1]]
             conv_res_mat = np.multiply(sample, fltr)
             result[i + 1][j + 1] = np.sum(conv_res_mat)
 
@@ -67,7 +67,7 @@ def get_median_filter():
     :return: 5X5 median filter that doesn't aid in
     convolution but is necessary to apply padding.
     '''
-    return np.array([[1 * 5] * 5])
+    return np.array([[1] * 5] * 5)
 
 
 def get_padded_image(image: np.ndarray, fltr: np.ndarray):
@@ -77,24 +77,55 @@ def get_padded_image(image: np.ndarray, fltr: np.ndarray):
 
     for i in range(round(padding_size / 2)):
         padded_img = np.hstack(
-            [np.hstack([np.zeros([padded_img.shape[0], 1]), padded_img]), np.zeros([padded_img.shape[0], 1])]
+            [
+                np.hstack(
+                    [
+                        np.zeros([padded_img.shape[0], 1]),
+                        padded_img
+                    ]
+                ),
+                np.zeros(
+                    [
+                        padded_img.shape[0],
+                        1
+                    ]
+                )]
         )
         padded_img = np.vstack(
-            [np.vstack([np.zeros([1, padded_img.shape[1]]), padded_img]), np.zeros([1, padded_img.shape[1]])]
+            [
+                np.vstack(
+                    [
+                        np.zeros(
+                            [1, padded_img.shape[1]]
+                        ), padded_img]
+                ),
+                np.zeros([1, padded_img.shape[1]])
+            ]
         )
 
     return padded_img
 
 
-def to_grayscale(img: np.ndarray):
-    gray = np.empty(
-        [img.shape[0],
-         img.shape[1]],
-        dtype=np.uint8
-    )
-    for i in range(0, img.shape[0]):
-        for j in range(0, img.shape[1]):
-            gray[i][j] = (img[i][j][2] * 0.2989
-                          + img[i][j][1] * 0.5870
-                          + img[i][j][0] * 0.1140)
-    return gray
+def adjust_contrast_brightness(image: np.ndarray):
+    brightness_factor = 25
+    contrast_factor = 3
+
+    for i in range(image.shape[0]):
+        for j in range(image.shape[1]):
+            b, g, r = image[i][j]
+
+            b, g, r = (clip(contrast_factor * b + brightness_factor),
+                       clip(contrast_factor * g + brightness_factor),
+                       clip(contrast_factor * r + brightness_factor))
+
+            image[i, j] = [b, g, r]
+
+    return image
+
+
+def clip(value):
+    if value > 255:
+        return 255
+    if value < 0:
+        return 0
+    return value
